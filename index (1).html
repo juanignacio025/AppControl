@@ -1,0 +1,706 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>App de Conteo</title>
+  <!-- Manifest and theme color for PWA -->
+  <link rel="manifest" href="manifest.json">
+  <meta name="theme-color" content="#1abc9c" />
+  <style>
+    /* Reset y base */
+* {
+  box-sizing: border-box;
+}
+body {
+  font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+  margin: 0;
+  background: #f5f7fa;
+  color: #333;
+  padding-bottom: 70px;
+  min-height: 100vh;
+}
+h1, h2 {
+  text-align: center;
+  margin: 1rem 0;
+  color: #2c3e50;
+}
+
+/* Navegación fija abajo */
+nav {
+  position: fixed;
+  bottom: 0;
+  left: 0;
+  width: 100%;
+  background: #34495e;
+  display: flex;
+  justify-content: space-around;
+  padding: 0.5rem 0;
+  box-shadow: 0 -2px 5px rgba(0,0,0,0.2);
+  z-index: 100;
+}
+nav button {
+  background: none;
+  border: none;
+  color: white;
+  font-size: 1rem;
+  padding: 0.5rem 0.7rem;
+  flex-grow: 1;
+  cursor: pointer;
+  transition: background 0.3s;
+  font-weight: 600;
+  user-select: none;
+}
+nav button:hover, nav button:focus {
+  background: #2c3e50;
+  outline: none;
+}
+nav button.active {
+  background: #1abc9c;
+  color: #fff;
+  font-weight: 700;
+}
+
+/* Pantallas */
+.pantalla {
+  display: none;
+  max-width: 600px;
+  margin: 0 auto 5rem;
+  padding: 0 1rem;
+}
+.pantalla.activa {
+  display: block;
+}
+
+/* Formularios */
+label {
+  display: block;
+  font-weight: 600;
+  margin: 0.5rem 0 0.2rem;
+}
+input[type="text"], input[type="number"], select, input[type="file"] {
+  width: 100%;
+  padding: 0.6rem 0.8rem;
+  font-size: 1.1rem;
+  border-radius: 5px;
+  border: 1.5px solid #ccc;
+  transition: border-color 0.3s;
+}
+input[type="text"]:focus, input[type="number"]:focus, select:focus, input[type="file"]:focus {
+  border-color: #1abc9c;
+  outline: none;
+}
+
+/* Botones */
+button {
+  margin-top: 1rem;
+  background-color: #1abc9c;
+  border: none;
+  color: white;
+  font-size: 1.1rem;
+  font-weight: 600;
+  padding: 0.7rem 1.2rem;
+  border-radius: 6px;
+  cursor: pointer;
+  transition: background-color 0.3s;
+  user-select: none;
+  width: 100%;
+}
+button:hover, button:focus {
+  background-color: #16a085;
+  outline: none;
+}
+button:disabled {
+  background-color: #95a5a6;
+  cursor: not-allowed;
+}
+
+/* Tablas */
+table {
+  width: 100%;
+  border-collapse: collapse;
+  margin-top: 1rem;
+  font-size: 0.9rem;
+  border-radius: 6px;
+  overflow: hidden;
+  box-shadow: 0 2px 6px rgba(0,0,0,0.1);
+}
+th, td {
+  padding: 0.6rem 0.8rem;
+  text-align: left;
+  border-bottom: 1px solid #ddd;
+}
+th {
+  background-color: #1abc9c;
+  color: white;
+  font-weight: 700;
+  position: sticky;
+  top: 0;
+  z-index: 10;
+}
+tr:hover {
+  background-color: #ecf0f1;
+}
+td button {
+  background: #e74c3c;
+  font-size: 0.8rem;
+  padding: 0.3rem 0.6rem;
+  margin-right: 0.3rem;
+  border-radius: 4px;
+  width: auto;
+}
+td button:hover {
+  background: #c0392b;
+}
+td button.edit-btn {
+  background: #2980b9;
+}
+td button.edit-btn:hover {
+  background: #1c5980;
+}
+
+/* Responsive móvil */
+@media (max-width: 480px) {
+  body {
+    padding-bottom: 90px;
+  }
+  nav button {
+    font-size: 0.9rem;
+    padding: 0.5rem 0.3rem;
+  }
+  table, thead, tbody, th, td, tr {
+    display: block;
+  }
+  thead tr {
+    position: absolute;
+    top: -9999px;
+    left: -9999px;
+  }
+  tr {
+    margin-bottom: 1rem;
+    border-radius: 6px;
+    box-shadow: 0 2px 8px rgba(0,0,0,0.05);
+    background: white;
+    padding: 1rem;
+  }
+  td {
+    border: none;
+    padding-left: 50%;
+    position: relative;
+  }
+  td::before {
+    position: absolute;
+    top: 0.6rem;
+    left: 1rem;
+    width: 45%;
+    padding-right: 0.5rem;
+    white-space: nowrap;
+    font-weight: 700;
+    color: #555;
+  }
+  /* Etiquetas dinámicas para la tabla registros */
+  td:nth-of-type(1)::before { content: "Fecha y Hora"; }
+  td:nth-of-type(2)::before { content: "Código"; }
+  td:nth-of-type(3)::before { content: "Descripción"; }
+  td:nth-of-type(4)::before { content: "Cantidad"; }
+  td:nth-of-type(5)::before { content: "Ubicación"; }
+  td:nth-of-type(6)::before { content: "Acciones"; }
+  /* Los campos personalizados aparecerán después, pero en móvil se complica: mejor para PC */
+  td button {
+    margin: 0.2rem 0 0.2rem 0;
+    width: 48%;
+  }
+}
+
+  </style>
+</head>
+<body>
+  <h1>App de Conteo de Inventario</h1>
+  <nav>
+    <button onclick="mostrarPantalla('maestro')">Cargar Maestro</button>
+    <button onclick="mostrarPantalla('conteo')">Realizar Conteo</button>
+    <button onclick="mostrarPantalla('registros')">Ver Registros</button>
+    <button onclick="mostrarPantalla('ubicaciones')">Administrar Ubicaciones</button>
+    <button id="btnCampos" onclick="mostrarPantalla('campos')">Campos Personalizados</button>
+  </nav>
+
+  <!-- Pantalla: Maestro -->
+  <div id="pantalla-maestro" class="pantalla">
+    <h2>Cargar Maestro</h2>
+    <input type="file" id="fileInput" accept=".csv" />
+    <button onclick="importarMaestro()">Importar</button>
+    <button onclick="limpiarMaestro()">Limpiar Maestro</button>
+    <p id="infoMaestro"></p>
+  </div>
+
+  <!-- Pantalla: Conteo -->
+  <div id="pantalla-conteo" class="pantalla">
+    <h2>Ingresar Conteo</h2>
+    <label>Código:</label>
+    <input type="text" id="codigo" onblur="mostrarDescripcion()" />
+    <label>Descripción:</label>
+    <input type="text" id="descripcion" disabled />
+    <label>Cantidad:</label>
+    <input type="number" id="cantidad" />
+    <label>Ubicación:</label>
+    <select id="ubicacionSelect"></select>
+
+    <div id="camposPersonalizadosConteo"></div>
+
+    <button onclick="agregarRegistro()">Agregar</button>
+  </div>
+
+  <!-- Pantalla: Registros -->
+  <div id="pantalla-registros" class="pantalla">
+    <h2>Registros Guardados</h2>
+    <button onclick="confirmarLimpiarRegistros()">Limpiar Todo</button>
+    <button onclick="exportarCSV()">Exportar CSV</button>
+    <table>
+      <thead id="theadRegistros">
+        <tr>
+          <th>Fecha y Hora</th>
+          <th>Código</th>
+          <th>Descripción</th>
+          <th>Cantidad</th>
+          <th>Ubicación</th>
+          <th>Acciones</th>
+        </tr>
+      </thead>
+      <tbody id="tablaBody"></tbody>
+    </table>
+  </div>
+
+  <!-- Pantalla: Ubicaciones -->
+  <div id="pantalla-ubicaciones" class="pantalla">
+    <h2>Administrar Ubicaciones</h2>
+    <input type="text" id="nuevaUbicacion" placeholder="Nombre nueva ubicación" />
+    <button onclick="agregarUbicacion()">Agregar Ubicación</button>
+    <button onclick="confirmarLimpiarUbicaciones()">Eliminar Todas</button>
+    <table>
+      <thead>
+        <tr>
+          <th>Ubicación</th>
+          <th>Acciones</th>
+        </tr>
+      </thead>
+      <tbody id="tablaUbicaciones"></tbody>
+    </table>
+  </div>
+
+  <!-- Pantalla: Campos Personalizados -->
+  <div id="pantalla-campos" class="pantalla">
+    <h2>Campos Personalizados</h2>
+    <label>Nombre del campo:</label>
+    <input type="text" id="nuevoCampoNombre" placeholder="Ej: Lote, Fecha de Vto, Observaciones" />
+    <button onclick="agregarCampoPersonalizado()">Agregar Campo</button>
+
+    <h3>Campos personalizados guardados</h3>
+    <table>
+      <thead>
+        <tr><th>Campo</th><th>Acciones</th></tr>
+      </thead>
+      <tbody id="tablaCampos"></tbody>
+    </table>
+  </div>
+
+  <script>
+    // Definir contraseña para controles
+    const PASSWORD = "1467"; // Cambiala aquí
+
+    // Variables principales
+    let maestro = JSON.parse(localStorage.getItem("maestro")) || {};
+    let registros = JSON.parse(localStorage.getItem("registros")) || [];
+    let ubicaciones = JSON.parse(localStorage.getItem("ubicaciones")) || [];
+
+    // Campos personalizados
+    let camposPersonalizados = JSON.parse(localStorage.getItem('camposPersonalizados')) || [];
+
+    // Pantallas
+    function mostrarPantalla(id) {
+      document.querySelectorAll(".pantalla").forEach(p => p.classList.remove("activa"));
+      document.getElementById("pantalla-" + id).classList.add("activa");
+      if (id === 'conteo') {
+        cargarUbicacionesSelect();
+        renderCamposPersonalizadosInputs();
+      }
+      if (id === 'ubicaciones') {
+        renderTablaUbicaciones();
+      }
+      if (id === 'campos') {
+        renderTablaCampos();
+      }
+    }
+
+    // Función para pedir y validar contraseña
+    function pedirPasswordAccion(mensaje = "Ingresá la contraseña:") {
+      const pass = prompt(mensaje);
+      if (pass !== PASSWORD) {
+        alert("Contraseña incorrecta. Acción cancelada.");
+        return false;
+      }
+      return true;
+    }
+
+    // Maestro
+    function importarMaestro() {
+      if (!pedirPasswordAccion("Ingresá la contraseña para importar el maestro:")) return;
+
+      const fileInput = document.getElementById("fileInput");
+      if (!fileInput.files.length) return alert("Seleccioná un archivo CSV");
+      const reader = new FileReader();
+      reader.onload = function () {
+        const lines = reader.result.trim().split("\n");
+        maestro = {};
+        lines.forEach((line, index) => {
+          if (index === 0 && line.toLowerCase().includes("codigo")) return;
+          const partes = line.split(";");
+          const codigo = partes[0];
+          const descripcion = partes.slice(1).join(";");
+          if (codigo && descripcion) maestro[codigo.trim()] = descripcion.trim();
+        });
+        localStorage.setItem("maestro", JSON.stringify(maestro));
+        actualizarInfoMaestro();
+        alert("Maestro cargado correctamente");
+      };
+      reader.readAsText(fileInput.files[0]);
+    }
+
+    function limpiarMaestro() {
+      if (!pedirPasswordAccion("Ingresá la contraseña para eliminar el maestro:")) return;
+      maestro = {};
+      localStorage.removeItem("maestro");
+      actualizarInfoMaestro();
+      alert("Maestro eliminado de la memoria");
+    }
+
+    function actualizarInfoMaestro() {
+      document.getElementById("infoMaestro").textContent = `Productos cargados: ${Object.keys(maestro).length}`;
+    }
+
+    // Ubicaciones
+    function agregarUbicacion() {
+      const nombre = document.getElementById("nuevaUbicacion").value.trim();
+      if (!nombre) return alert("Ingresá un nombre válido");
+      if (ubicaciones.includes(nombre)) return alert("La ubicación ya existe");
+      ubicaciones.push(nombre);
+      localStorage.setItem("ubicaciones", JSON.stringify(ubicaciones));
+      document.getElementById("nuevaUbicacion").value = "";
+      renderTablaUbicaciones();
+      cargarUbicacionesSelect();
+    }
+
+    function renderTablaUbicaciones() {
+      const tbody = document.getElementById("tablaUbicaciones");
+      tbody.innerHTML = "";
+      ubicaciones.forEach((u, i) => {
+        const tr = document.createElement("tr");
+        tr.innerHTML = `
+          <td>${u}</td>
+          <td>
+            <button onclick="editarUbicacionPrompt(${i})">Editar</button>
+            <button onclick="eliminarUbicacion(${i})">Eliminar</button>
+          </td>`;
+        tbody.appendChild(tr);
+      });
+    }
+
+    function editarUbicacionPrompt(index) {
+      const actual = ubicaciones[index];
+      const nuevo = prompt("Editar ubicación:", actual);
+      if (nuevo === null) return; // canceló
+      const nuevoTrim = nuevo.trim();
+      if (!nuevoTrim) return alert("Nombre inválido");
+      if (ubicaciones.includes(nuevoTrim) && nuevoTrim !== actual) return alert("Ya existe esa ubicación");
+      ubicaciones[index] = nuevoTrim;
+      localStorage.setItem("ubicaciones", JSON.stringify(ubicaciones));
+      renderTablaUbicaciones();
+      cargarUbicacionesSelect();
+    }
+
+    function eliminarUbicacion(index) {
+      if (!confirm(`¿Seguro querés eliminar la ubicación "${ubicaciones[index]}"?`)) return;
+      ubicaciones.splice(index, 1);
+      localStorage.setItem("ubicaciones", JSON.stringify(ubicaciones));
+      renderTablaUbicaciones();
+      cargarUbicacionesSelect();
+    }
+
+    function confirmarLimpiarUbicaciones() {
+      if (!pedirPasswordAccion("Ingresá la contraseña para eliminar todas las ubicaciones:")) return;
+      if (confirm("¿Querés eliminar todas las ubicaciones?")) {
+        ubicaciones = [];
+        localStorage.removeItem("ubicaciones");
+        renderTablaUbicaciones();
+        cargarUbicacionesSelect();
+      }
+    }
+
+    function cargarUbicacionesSelect() {
+      const select = document.getElementById("ubicacionSelect");
+      select.innerHTML = "";
+      if (ubicaciones.length === 0) {
+        const option = document.createElement("option");
+        option.textContent = "No hay ubicaciones";
+        option.value = "";
+        select.appendChild(option);
+      } else {
+        ubicaciones.forEach(u => {
+          const option = document.createElement("option");
+          option.textContent = u;
+          option.value = u;
+          select.appendChild(option);
+        });
+        // Mantener selección previa o seleccionar la primera
+        const seleccionado = localStorage.getItem("ubicacionSeleccionada");
+        if (seleccionado && ubicaciones.includes(seleccionado)) {
+          select.value = seleccionado;
+        } else {
+          select.selectedIndex = 0;
+          localStorage.setItem("ubicacionSeleccionada", select.value);
+        }
+      }
+      select.onchange = () => {
+        localStorage.setItem("ubicacionSeleccionada", select.value);
+      };
+    }
+
+    // Campos Personalizados
+    function agregarCampoPersonalizado() {
+      if (!pedirPasswordAccion("Ingresá la contraseña para agregar un campo personalizado:")) return;
+      const input = document.getElementById('nuevoCampoNombre');
+      const nombre = input.value.trim();
+      if (!nombre) return alert('Ingresá un nombre válido para el campo.');
+      if (camposPersonalizados.includes(nombre)) return alert('El campo ya existe.');
+      camposPersonalizados.push(nombre);
+      localStorage.setItem('camposPersonalizados', JSON.stringify(camposPersonalizados));
+      input.value = '';
+      renderTablaCampos();
+    }
+
+    function renderTablaCampos() {
+      const tbody = document.getElementById('tablaCampos');
+      tbody.innerHTML = '';
+      camposPersonalizados.forEach((campo, i) => {
+        const tr = document.createElement('tr');
+        tr.innerHTML = `
+          <td>${campo}</td>
+          <td>
+            <button onclick="eliminarCampo(${i})">Eliminar</button>
+          </td>
+        `;
+        tbody.appendChild(tr);
+      });
+    }
+
+    function eliminarCampo(i) {
+      if (!pedirPasswordAccion("Ingresá la contraseña para eliminar un campo personalizado:")) return;
+      if (!confirm(`¿Querés eliminar el campo "${camposPersonalizados[i]}"?`)) return;
+      camposPersonalizados.splice(i, 1);
+      localStorage.setItem('camposPersonalizados', JSON.stringify(camposPersonalizados));
+      renderTablaCampos();
+    }
+
+    // Renderizar inputs de campos personalizados en conteo
+    function renderCamposPersonalizadosInputs() {
+      const container = document.getElementById('camposPersonalizadosConteo');
+      container.innerHTML = '';
+      camposPersonalizados.forEach(campo => {
+        const id = 'campo_' + campo.replace(/\s+/g, '_');
+        const label = document.createElement('label');
+        label.textContent = campo + ':';
+        const input = document.createElement('input');
+        input.type = 'text';
+        input.id = id;
+        container.appendChild(label);
+        container.appendChild(input);
+      });
+    }
+
+    // Mostrar descripción automáticamente al ingresar código
+    function mostrarDescripcion() {
+      const codigo = document.getElementById('codigo').value.trim();
+      const descInput = document.getElementById('descripcion');
+      descInput.value = maestro[codigo] || '';
+    }
+
+    // Agregar registro
+    function agregarRegistro() {
+      const codigo = document.getElementById('codigo').value.trim();
+      const descripcion = document.getElementById('descripcion').value.trim();
+      const cantidad = Number(document.getElementById('cantidad').value);
+      const ubicacion = document.getElementById('ubicacionSelect').value;
+
+      if (!codigo || !descripcion) return alert('Ingresá un código válido y que esté en el maestro.');
+      if (!cantidad || isNaN(cantidad) || cantidad <= 0) return alert('Ingresá una cantidad válida.');
+      if (!ubicacion) return alert('Seleccioná una ubicación.');
+
+      // Agregar campos personalizados
+      let camposExtras = {};
+      camposPersonalizados.forEach(campo => {
+        const val = document.getElementById('campo_' + campo.replace(/\s+/g, '_')).value.trim();
+        camposExtras[campo] = val;
+      });
+
+      const registro = {
+        fecha: new Date().toISOString(),
+        codigo,
+        descripcion,
+        cantidad,
+        ubicacion,
+        camposExtras
+      };
+
+      registros.push(registro);
+      localStorage.setItem('registros', JSON.stringify(registros));
+      alert('Registro agregado.');
+      limpiarFormularioConteo();
+      renderTablaRegistros();
+    }
+
+    // Limpiar formulario conteo
+    function limpiarFormularioConteo() {
+      document.getElementById('codigo').value = '';
+      document.getElementById('descripcion').value = '';
+      document.getElementById('cantidad').value = '';
+      camposPersonalizados.forEach(campo => {
+        document.getElementById('campo_' + campo.replace(/\s+/g, '_')).value = '';
+      });
+    }
+
+    // Render tabla registros
+    function renderTablaRegistros() {
+      const tbody = document.getElementById('tablaBody');
+      tbody.innerHTML = '';
+      registros.forEach((r, i) => {
+        const tr = document.createElement('tr');
+        let camposExtraHTML = '';
+        for (const key in r.camposExtras) {
+          camposExtraHTML += `<br><small><strong>${key}:</strong> ${r.camposExtras[key]}</small>`;
+        }
+        tr.innerHTML = `
+          <td>${new Date(r.fecha).toLocaleString()}</td>
+          <td>${r.codigo}</td>
+          <td>${r.descripcion}${camposExtraHTML}</td>
+          <td>${r.cantidad}</td>
+          <td>${r.ubicacion}</td>
+          <td><button onclick="eliminarRegistro(${i})">Eliminar</button></td>
+        `;
+        tbody.appendChild(tr);
+      });
+
+      // Actualizar encabezado para campos personalizados
+      const thead = document.getElementById("theadRegistros");
+      let headerHTML = `
+        <tr>
+          <th>Fecha y Hora</th>
+          <th>Código</th>
+          <th>Descripción</th>
+          <th>Cantidad</th>
+          <th>Ubicación</th>
+          <th>Acciones</th>
+        </tr>`;
+      thead.innerHTML = headerHTML;
+    }
+
+    function eliminarRegistro(i) {
+      if (!confirm("¿Querés eliminar este registro?")) return;
+      registros.splice(i, 1);
+      localStorage.setItem("registros", JSON.stringify(registros));
+      renderTablaRegistros();
+    }
+
+    function confirmarLimpiarRegistros() {
+      if (!pedirPasswordAccion("Ingresá la contraseña para eliminar todos los registros:")) return;
+      if (confirm("¿Querés eliminar todos los registros?")) {
+        registros = [];
+        localStorage.removeItem("registros");
+        renderTablaRegistros();
+      }
+    }
+
+    // --- NUEVO: helper para limpiar/normalizar celdas antes de exportar ---
+    function sanitizeCsvCell(value) {
+      if (value === null || value === undefined) return '';
+      let s = String(value);
+
+      // corregir mojibake común (Ã¡ -> á, etc.)
+      s = s.replace(/Ã¡/g, 'á').replace(/Ã©/g, 'é').replace(/Ã­/g, 'í')
+           .replace(/Ã³/g, 'ó').replace(/Ãº/g, 'ú').replace(/Ã±/g, 'ñ')
+           .replace(/ÃÁ/g,'Á').replace(/Ã‰/g,'É').replace(/Ã/g,'Í')
+           .replace(/Ã“/g,'Ó').replace(/Ãš/g,'Ú').replace(/Ã‘/g,'Ñ');
+
+      // corregir casos donde el grado aparece como Â° o similar
+      s = s.replace(/Â°/g, '°').replace(/Ã‚°/g, '°');
+
+      // si el texto no tiene el símbolo grado pero tiene patrones "H G" o "H A", convertirlos a "H°G°" / "H°A°"
+      // (evita alterar cosas que no sean separaciones de letras)
+      s = s.replace(/\bH\s*G\b/g, 'H°G°').replace(/\bH\s*A\b/g, 'H°A°');
+
+      // Trim final
+      return s;
+    }
+
+    // Exportar registros a CSV (modificada para BOM y sanitizar celdas)
+    function normalizarDescripcion(text) {
+      if (!text) return "";
+      // Cambia todos los caracteres extraños o mal codificados por el símbolo correcto
+      return text.replace(/[�°]/g, '°');
+    }
+
+function exportarCSV() {
+  if (registros.length === 0) return alert("No hay registros para exportar.");
+
+  const header = ["Fecha", "Código", "Descripción", "Cantidad", "Ubicación", ...camposPersonalizados];
+  const filas = registros.map(r => [
+    new Date(r.fecha).toLocaleString(),
+    r.codigo,
+    normalizarDescripcion(r.descripcion),
+    r.cantidad,
+    r.ubicacion,
+    ...camposPersonalizados.map(c => normalizarDescripcion(r.camposExtras[c]) || "")
+  ]);
+
+  const escapeCsv = text => {
+    if (typeof text !== 'string') text = text?.toString() || '';
+    return text.replace(/"/g, '""');
+  };
+
+  let csvContent = header.join(";") + "\n";
+  filas.forEach(fila => {
+    csvContent += fila.map(c => `"${escapeCsv(c)}"`).join(";") + "\n";
+  });
+
+  const BOM = '\uFEFF'; // Marca BOM para UTF-8
+  const blob = new Blob([BOM + csvContent], { type: 'text/csv;charset=utf-8;' });
+
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement('a');
+  a.href = url;
+  a.download = 'registros.csv';
+  document.body.appendChild(a);
+  a.click();
+  document.body.removeChild(a);
+  URL.revokeObjectURL(url);
+}
+
+    // Inicializar datos y UI
+    actualizarInfoMaestro();
+    mostrarPantalla('maestro');
+    renderTablaCampos();
+    renderTablaRegistros();
+    renderTablaUbicaciones();
+
+  </script>
+
+  <!-- Service Worker Registration -->
+  <script>
+    if ('serviceWorker' in navigator) {
+      window.addEventListener('load', () => {
+        navigator.serviceWorker.register('service-worker.js')
+          .then(reg => console.log('Service worker registrado:', reg))
+          .catch(err => console.error('Error al registrar SW:', err));
+      });
+    }
+  </script>
+</body>
+</html>
